@@ -1,15 +1,21 @@
-FROM debian:13-slim
+FROM debian:latest
 
-LABEL maintainer="maltokyo"
+COPY entrypoint.sh /
 
-RUN apt-get update && apt-get install -y nginx nginx-extras apache2-utils
+RUN apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests -y  procps \
+    nginx-full nginx-extras libnginx-mod-http-dav-ext libnginx-mod-http-auth-pam  openssl \
+    && apt-get remove --purge --auto-remove -y && rm -rf /var/lib/apt/lists/* \
+    && rm /etc/nginx/sites-enabled/* \
+    && mkdir -p "/media/data" \
+    && chmod +x entrypoint.sh
 
 
 COPY webdav.conf /etc/nginx/conf.d/default.conf
-RUN rm /etc/nginx/sites-enabled/*
+
+#RUN chown -R www-data:www-data "/media/data"
 
 VOLUME /media/data
 
-COPY entrypoint.sh /
-RUN chmod +x entrypoint.sh
+USER  root
 CMD /entrypoint.sh && nginx -g "daemon off;"
